@@ -5,14 +5,13 @@ app = Flask(__name__)
 
 
 def get_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("fintrax.db")
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db():
     conn = get_db()
-
     conn.execute("""
     CREATE TABLE IF NOT EXISTS transaksi(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +21,6 @@ def init_db():
         jenis TEXT
     )
     """)
-
     conn.commit()
     conn.close()
 
@@ -89,6 +87,44 @@ def delete(id):
     conn.execute(
         "DELETE FROM transaksi WHERE id=?",
         (id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+
+@app.route("/edit/<int:id>")
+def edit(id):
+
+    conn = get_db()
+
+    transaksi = conn.execute(
+        "SELECT * FROM transaksi WHERE id=?",
+        (id,)
+    ).fetchone()
+
+    conn.close()
+
+    return render_template("edit.html", t=transaksi)
+
+
+@app.route("/update/<int:id>", methods=["POST"])
+def update(id):
+
+    tanggal = request.form["tanggal"]
+    deskripsi = request.form["deskripsi"]
+    jumlah = request.form["jumlah"]
+    jenis = request.form["jenis"]
+
+    conn = get_db()
+
+    conn.execute(
+        """UPDATE transaksi
+        SET tanggal=?, deskripsi=?, jumlah=?, jenis=?
+        WHERE id=?""",
+        (tanggal, deskripsi, jumlah, jenis, id)
     )
 
     conn.commit()
